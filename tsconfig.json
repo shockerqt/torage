@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "lib": ["es2020"],
+    "lib": ["ESNext", "DOM"],
     "types": ["node", "@webgpu/types"],
+    "resolveJsonModule": true,
     "module": "commonjs",
-    "target": "es2020",
+    "target": "ESNext",
     "outDir": "./lib",
     "sourceMap": true,
     "strict": true,

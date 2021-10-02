@@ -37,7 +37,6 @@ module.exports = {
     'prefer-template': 'error',
     'rest-spread-spacing': 'error',
     'template-curly-spacing': 'warn',
-    'sort-imports': 'warn',
     'object-shorthand': 'warn',
     'no-useless-rename': 'warn',
     'prefer-arrow-callback': 'warn',
