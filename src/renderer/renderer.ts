@@ -2,6 +2,9 @@ import { Camera } from './camera';
 import { Scene } from './scene';
 
 export class Renderer {
+  public initialized = false;
+
+  private canvas: HTMLCanvasElement;
   private context!: GPUCanvasContext;
   private device!: GPUDevice;
   private presentationSize!: GPUExtent3D;
@@ -10,20 +13,28 @@ export class Renderer {
   private cameraUniformBuffer!: GPUBuffer;
   private lightDataBuffer!: GPUBuffer;
 
-  public async init(canvas: HTMLCanvasElement): Promise<void> {
+  constructor(canvas: HTMLCanvasElement) {
     if (!canvas) throw new Error('Missing canvas');
+    this.canvas = canvas;
+  }
+
+  public async init(scene: Scene, camera: Camera): Promise<void> {
+    if (this.initialized) {
+      console.log('Already initialized');
+      return;
+    }
 
     const adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
     this.device = await adapter.requestDevice() as GPUDevice;
 
     if (!this.device) throw new Error('No gpu found');
 
-    this.context = canvas.getContext('webgpu') as GPUCanvasContext;
+    this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 
     this.presentationFormat = this.context.getPreferredFormat(adapter);
     this.presentationSize = [
-      canvas.clientWidth * devicePixelRatio,
-      canvas.clientHeight * devicePixelRatio,
+      this.canvas.clientWidth * devicePixelRatio,
+      this.canvas.clientHeight * devicePixelRatio,
     ];
 
     this.context.configure({
@@ -53,17 +64,24 @@ export class Renderer {
     } as GPURenderPassDescriptor;
 
     this.cameraUniformBuffer = this.device.createBuffer({
-      size: this.matrixSize,
+      size: Camera.matrixSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
     this.lightDataBuffer = this.device.createBuffer({
-      size: lightDataSize,
+      size: Scene.lightDataSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
+
+    scene.init(this.device, this.cameraUniformBuffer, this.lightDataBuffer);
+    camera.init(this.canvas.width / this.canvas.height);
+
+    this.initialized = true;
   }
 
-  public render(scene: Scene, camera: Camera): void {
+  public async render(scene: Scene, camera: Camera): Promise<void> {
+    if (!this.initialized) throw Error('Not initialized');
+
     // camera buffer
     const cameraViewProjectionMatrix = camera.getCameraViewProjMatrix() as Float32Array;
     this.device.queue.writeBuffer(
@@ -91,11 +109,10 @@ export class Renderer {
     const passEncoder = commandEncoder.beginRenderPass(this.renderPassDescriptor);
 
     scene.getMeshes().forEach(mesh => {
-      mesh.draw(passEncoder, this.device);
+      mesh.render(passEncoder, this.device);
     });
-  }
 
-  static test(): void {
-    console.log('TEST');
+    passEncoder.endPass();
+    this.device.queue.submit([commandEncoder.finish()]);
   }
 }

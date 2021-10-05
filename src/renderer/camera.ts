@@ -1,13 +1,10 @@
 import { mat4, vec3 } from 'gl-matrix';
 
 export class Camera {
-  public x = 0;
-  public y = 0;
-  public z = 0;
+  public static matrixSize = 4 * 16; // 4x4 matrix
 
-  public rotX = 0;
-  public rotY = 0;
-  public rotZ = 0;
+  public position = { x: 0, y: 0, z: 0 };
+  public rotation = { x: 0, y: 0, z: 0 };
 
   public fovy: number = (2 * Math.PI) / 5;
   public aspect: number = 16 / 9;
@@ -17,14 +14,18 @@ export class Camera {
 
   public lookAt: vec3 = vec3.fromValues(0, 0, 0);
 
+  public init(aspect: number): void {
+    this.aspect = aspect;
+  }
+
   public getViewMatrix(): mat4 {
     const viewMatrix = mat4.create();
 
-    mat4.lookAt(viewMatrix, vec3.fromValues(this.x, this.y, this.z), this.lookAt, vec3.fromValues(0, 1, 0));
+    mat4.lookAt(viewMatrix, vec3.fromValues(this.position.x, this.position.y, this.position.z), this.lookAt, vec3.fromValues(0, 1, 0));
 
-    mat4.rotateX(viewMatrix, viewMatrix, this.rotX);
-    mat4.rotateY(viewMatrix, viewMatrix, this.rotY);
-    mat4.rotateZ(viewMatrix, viewMatrix, this.rotZ);
+    mat4.rotateX(viewMatrix, viewMatrix, this.rotation.x);
+    mat4.rotateY(viewMatrix, viewMatrix, this.rotation.y);
+    mat4.rotateZ(viewMatrix, viewMatrix, this.rotation.z);
     return viewMatrix;
   }
 

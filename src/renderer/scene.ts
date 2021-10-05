@@ -12,6 +12,10 @@ export class Scene {
     this.meshes.push(mesh);
   }
 
+  public init(device: GPUDevice, cameraUniformBuffer: GPUBuffer, lightDataBuffer: GPUBuffer): void {
+    this.meshes.forEach((mesh: Mesh) => mesh.init(device, cameraUniformBuffer, lightDataBuffer, Scene.lightDataSize));
+  }
+
   public getMeshes(): Mesh[] {
     return this.meshes;
   }
