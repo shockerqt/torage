@@ -1,4 +1,5 @@
 import { Camera, Input, Renderer, Scene } from '.';
+import { Tree } from './three';
 
 export class Main {
   static input: Input;
@@ -8,9 +9,10 @@ export class Main {
   static initialized = false;
   static pause = false;
   static canvas?: HTMLCanvasElement;
-  static scene: Scene = new Scene;
-  static camera: Camera = new Camera;
+  static scene: Scene = new Scene();
+  static camera: Camera = new Camera();
   static renderer?: Renderer;
+  static tree: Tree = new Tree();
 
   static update(callback: (delta: number) => void): void {
     Main.updateArray.push(callback);
@@ -39,6 +41,10 @@ export class Main {
 
     await Main.renderer.init(Main.scene, Main.camera);
     requestAnimationFrame(render);
+  }
+
+  static create(node: Node): Node {
+    return new Node();
   }
 
 }

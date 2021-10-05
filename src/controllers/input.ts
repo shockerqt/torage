@@ -1,5 +1,5 @@
 export class Input {
-  mouse = { x: 0, y: 0};
+  mouse = { x: 0, y: 0, wheel: 0};
   buttonMap: { [key: string]: { holding: boolean, down: boolean, up: boolean } } = {};
 
   constructor(canvas: HTMLCanvasElement) {
@@ -12,22 +12,45 @@ export class Input {
       event.stopPropagation();
     };
 
-    element.onmousedown = (event) => {
-      console.log(event);
+    element.onwheel = (event: WheelEvent) => {
+      this.mouse.wheel += event.deltaY;
       noDefault(event);
     };
 
-    element.onmouseup = (event) => {
-      console.log(event);
+    element.onmousedown = (event: MouseEvent) => {
+      const key = `mouse${event.button}`;
+      if (!this.buttonMap[key]) this.init(key);
+      const button = this.buttonMap[key];
+
+      // If holding for first time, set down to true, else set to false
+      if (!button.holding) button.down = true;
+
+      // Update button holding value
+      button.holding = true;
+
       noDefault(event);
     };
 
-    element.onmousemove = (event) => {
+    element.onmouseup = (event: MouseEvent) => {
+      const key = `mouse${event.button}`;
+      if (!this.buttonMap[key]) this.init(key);
+      const button = this.buttonMap[key];
+
+      // If holding for first time, set down to true, else set to false
+      if (button.holding) button.up = true;
+
+      // Update button holding value
+      button.holding = false;
+
+      noDefault(event);
+    };
+
+    element.onmousemove = (event: MouseEvent) => {
       this.mouse.x = event.x;
       this.mouse.y = event.y;
     };
 
-    element.onkeydown = (event) => {
+    onkeydown = (event: KeyboardEvent) => {
       if (!this.buttonMap[event.key]) this.init(event.key);
       const button = this.buttonMap[event.key];
 
@@ -40,7 +63,7 @@ export class Input {
       noDefault(event);
     };
 
-    element.onkeyup = (event) => {
+    onkeyup = (event: KeyboardEvent) => {
       if (!this.buttonMap[event.key]) this.init(event.key);
       const button = this.buttonMap[event.key];
 
@@ -54,32 +77,32 @@ export class Input {
     };
   }
 
-  private init(key: string) {
+  private init(button: string) {
     const initState = {
       holding: false,
       down: false,
       up: false,
     };
 
-    this.buttonMap[key] = initState;
+    this.buttonMap[button] = initState;
   }
 
-  public holding(key: string): boolean {
-    if (!this.buttonMap[key]) this.init(key);
+  public holding(button: string): boolean {
+    if (!this.buttonMap[button]) this.init(button);
 
-    return this.buttonMap[key].holding;
+    return this.buttonMap[button].holding;
   }
 
-  public down(key: string): boolean {
-    if (!this.buttonMap[key]) this.init(key);
+  public down(button: string): boolean {
+    if (!this.buttonMap[button]) this.init(button);
 
-    return this.buttonMap[key].down;
+    return this.buttonMap[button].down;
   }
 
-  public up(key: string): boolean {
-    if (!this.buttonMap[key]) this.init(key);
+  public up(button: string): boolean {
+    if (!this.buttonMap[button]) this.init(button);
 
-    return this.buttonMap[key].up;
+    return this.buttonMap[button].up;
   }
 
   public update(): void {
@@ -87,6 +110,7 @@ export class Input {
       value.down = false;
       value.up = false;
     });
+    this.mouse.wheel = 0;
   }
 
 }

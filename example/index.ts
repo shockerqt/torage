@@ -1,5 +1,4 @@
-import { Camera, CubeGeometry, Mesh, Renderer, Scene } from '../src';
-import { Input } from '../src/controllers';
+import { CubeGeometry, Mesh } from '../src';
 import { Main } from '../src/main';
 
 const canvas = document.createElement('canvas');
@@ -12,11 +11,44 @@ document.body.appendChild(canvas);
 const geometry = new CubeGeometry();
 const cube = new Mesh(geometry);
 
+
 Main.init(canvas);
+Main.scene.add(cube);
+
+
+let lastMouse = Main.input.mouse;
+Main.update(() => {
+  // Zoom
+  Main.camera.position.z += Main.input.mouse.wheel / 100;
+
+  // Rotate Camera
+  if (Main.input.holding('mouse0')) {
+    const rotateX = Main.input.mouse.y - lastMouse.y;
+    const rotateY = Main.input.mouse.x - lastMouse.x;
+
+    if (rotateX !== 0 || rotateY !== 0) {
+      Main.camera.rotation.x += (rotateX) / 100;
+      Main.camera.rotation.y += (rotateY) / 100;
+    }
+  }
+
+  // Move Camera
+  if (Main.input.holding('mouse1')) {
+    const translateX = Main.input.mouse.y - lastMouse.y;
+    const translateY = Main.input.mouse.x - lastMouse.x;
+
+    if (translateX !== 0 || translateY !== 0) {
+      Main.camera.position.x += (translateX) / 100;
+      Main.camera.position.y += (translateY) / 100;
+    }
+  }
+
+  lastMouse = { ...Main.input.mouse };
+});
 
 Main.update(() => {
-  // if (Main.input.down('a')) console.log('Fire');
-  // if (Main.input.down('s')) console.log('Fire S');
-  // if (Main.input.holding('a')) console.log('Holding');
-  // if (Main.input.up('a')) console.log('Release');
+  if (Main.input.holding('w')) {
+    cube.position.x += 0.01;
+    console.log('Hold');
+  }
 });
