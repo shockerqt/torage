@@ -20,8 +20,7 @@ export class Renderer {
 
   public async init(scene: Scene, camera: Camera): Promise<void> {
     if (this.initialized) {
-      console.log('Already initialized');
-      return;
+      console.warn('Already initialized');
     }
 
     const adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
@@ -79,7 +78,7 @@ export class Renderer {
     this.initialized = true;
   }
 
-  public async render(scene: Scene, camera: Camera): Promise<void> {
+  public render(scene: Scene, camera: Camera): void {
     if (!this.initialized) throw Error('Not initialized');
 
     // camera buffer
