@@ -74,8 +74,17 @@ export class Mesh {
         geometry.rotateMatrix.byteLength
       );
 
+      const uniformColor = new Float32Array([geometry.color.r, geometry.color.g, geometry.color.b, geometry.color.a]);
+      device.queue.writeBuffer(
+        geometry.colorBuffer,
+        0,
+        uniformColor.buffer,
+        uniformColor.byteOffset,
+        uniformColor.byteLength
+      );
+
       passEncoder.setVertexBuffer(0, geometry.verticesBuffer);
-      passEncoder.setBindGroup(0, geometry.transformationBindGroup);
+      passEncoder.setBindGroup(0, geometry.bindGroup);
       passEncoder.draw(geometry.vertices.length, 1, 0, 0);
     });
   }

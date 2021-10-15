@@ -12,9 +12,13 @@ const geometry = new CubeGeometry();
 const cube = new Mesh(geometry);
 
 
+// Create Cube
+const geometry2 = new CubeGeometry();
+const cube2 = new Mesh(geometry2);
 
 Main.init(canvas);
 Main.scene.add(cube);
+Main.scene.add(cube2);
 Main.camera.position.z = -10;
 Main.camera.position.x = -10;
 
@@ -30,7 +34,9 @@ Main.update(() => {
 
     if (rotateX !== 0 || rotateY !== 0) {
       cube.rotation.x += (rotateX) / 100;
+      geometry.color.r += (rotateX) / 100;
       cube.rotation.y += (rotateY) / 100;
+      geometry.color.a += ((rotateY) / 100) % 1;
     }
   }
 
