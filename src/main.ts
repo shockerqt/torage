@@ -1,5 +1,5 @@
 import { Camera, Input, Renderer, Scene } from '.';
-import { Tree } from './three';
+import { Tree } from './tree';
 
 export class Main {
   static input: Input;

@@ -4,17 +4,30 @@ import fragmentShader from './fragment_shader.wgsl';
 
 import { Geometry } from '../../geometry';
 
+/**
+ * Class representing a cube geometry
+ * @author Fabián Jaña
+ */
 export class CubeGeometry extends Geometry {
+  /**
+   * Offset for buffers.
+   * transformationBindGroup offset must be 256-byte aligned.
+   */
+  readonly offset = 256;
+
   constructor() {
     super();
     this.vertices = vertices;
   }
 
-  public init(device: GPUDevice, cameraUniformBuffer: GPUBuffer, lightDataBuffer: GPUBuffer, lightDataSize: number, scale: { x: number; y: number; z: number; }, color: { r: number; g: number; b: number; }): void {
-    const offset = 256; // transformationBindGroup offset must be 256-byte aligned
-    const uniformBufferSize = offset;
+  public init(
+    device: GPUDevice,
+    cameraUniformBuffer: GPUBuffer,
+    lightDataBuffer: GPUBuffer,
+    lightDataSize: number
+  ): void {
+    const uniformBufferSize = this.offset;
     const matrixSize = 4 * 16; // 4x4 matrix
-
     const vertexSize = ( 3 + 3 + 2 ); // 3 for position, 3 for normal, 2 for uv, 3 for color
     const stride = vertexSize * 4; // ( 3 (pos) + 3 (norm) + 2 (uv) ) * 4 bytes
 
@@ -77,9 +90,9 @@ export class CubeGeometry extends Geometry {
     vertices.forEach((vertex, i) => {
       // (3 * 4) + (3 * 4) + (2 * 4)
       mapping.set([
-        vertex.pos[0] * scale.x,
-        vertex.pos[1] * scale.y,
-        vertex.pos[2] * scale.z,
+        vertex.pos[0] * this.scale.x,
+        vertex.pos[1] * this.scale.y,
+        vertex.pos[2] * this.scale.z,
       ], vertexSize * i + 0);
       mapping.set(vertex.norm, vertexSize * i + 3);
       mapping.set(vertex.uv, vertexSize * i + 6);
@@ -91,15 +104,14 @@ export class CubeGeometry extends Geometry {
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
-    const colorBuffer = device.createBuffer({
+    this.colorBuffer = device.createBuffer({
       mappedAtCreation: true,
       size: Float32Array.BYTES_PER_ELEMENT * 3,
       usage: GPUBufferUsage.STORAGE,
     });
-    const colorMapping = new Float32Array(colorBuffer.getMappedRange());
-    colorMapping.set([color.r, color.g, color.b], 0);
-    colorBuffer.unmap();
-
+    const colorMapping = new Float32Array(this.colorBuffer.getMappedRange());
+    colorMapping.set([this.color.r, this.color.g, this.color.b], 0);
+    this.colorBuffer.unmap();
 
     const entries = [
       {
@@ -113,7 +125,7 @@ export class CubeGeometry extends Geometry {
       {
         binding: 1,
         resource: {
-          buffer: colorBuffer,
+          buffer: this.colorBuffer,
           offset: 0,
           size: Float32Array.BYTES_PER_ELEMENT * 3,
         },

@@ -1,50 +1,90 @@
 import { mat4, vec3 } from 'gl-matrix';
 import { Geometry, GeometryParameters } from './geometry';
 
+/**
+ * Class representing a mesh.
+ * Mesh allows to join multiple geometries in a body.
+ * @author Fabián Jaña
+ */
 export class Mesh {
-  private geometry: Geometry;
+  private geometries: Geometry[];
 
   public position = { x: 0, y: 0, z: 0 };
   public rotation = { x: 0, y: 0, z: 0 };
   public scale = { x: 1, y: 1, z: 1 };
-  public color: { r: number; g: number; b: number; };
 
-  constructor(geometry: Geometry, initTransformation?: GeometryParameters, color?: { r: number; g: number; b: number; }) {
-    this.geometry = geometry;
-    this.color = color || { r: 0.5, g: 0.7, b: 0.3 };
+  /**
+   * Creates a mesh
+   * @param geometry - The first geometry attached to the mesh.
+   * @param initTransformation - Initial position, scale and rotation.
+   */
+  constructor(geometry?: Geometry, initTransformation?: GeometryParameters) {
+    this.geometries = [];
     this.setParameters(initTransformation);
+    if (geometry) this.add(geometry);
   }
 
+  /**
+   * Initialize all the geometries on the mesh.
+   * @param device - Device on which the mesh will be rendered.
+   * @param cameraUniformBuffer - Uniform Buffer to control the camera.
+   * @param lightDataBuffer - Uniform Buffer to control the lights.
+   * @param lightDataSize - Size of the lights.
+   */
   public init(device: GPUDevice, cameraUniformBuffer: GPUBuffer, lightDataBuffer: GPUBuffer, lightDataSize: number): void {
-    this.geometry.init(device, cameraUniformBuffer, lightDataBuffer, lightDataSize, this.scale, this.color);
+    this.geometries.forEach((geometry) => {
+      geometry.init(device, cameraUniformBuffer, lightDataBuffer, lightDataSize);
+    });
   }
 
+  /**
+   * Add a new geometry to the mesh.
+   * @param geometry - Geometry to attach to this mesh.
+   */
+  public add(geometry: Geometry): void {
+    this.geometries.push(geometry);
+  }
+
+  /**
+   * Render each geometry from the mesh.
+   * @param passEncoder - Render pass encoder on which the geometries will be drawn.
+   * @param device - Device on which the geometries will be rendered.
+   */
   public render(passEncoder: GPURenderPassEncoder, device: GPUDevice): void {
     this.updateTransformationMatrix();
 
-    passEncoder.setPipeline(this.geometry.pipeline);
-    device.queue.writeBuffer(
-      this.geometry.transformationBuffer,
-      0,
-      this.geometry.transformMatrix.buffer,
-      this.geometry.transformMatrix.byteOffset,
-      this.geometry.transformMatrix.byteLength
-    );
-    device.queue.writeBuffer(
-      this.geometry.transformationBuffer,
-      64,
-      this.geometry.rotateMatrix.buffer,
-      this.geometry.rotateMatrix.byteOffset,
-      this.geometry.rotateMatrix.byteLength
-    );
-    passEncoder.setVertexBuffer(0, this.geometry.verticesBuffer);
-    passEncoder.setBindGroup(0, this.geometry.transformationBindGroup);
-    passEncoder.draw(this.geometry.vertices.length, 1, 0, 0);
+    this.geometries.forEach(geometry => {
+      passEncoder.setPipeline(geometry.pipeline);
+
+      // Write position buffer
+      device.queue.writeBuffer(
+        geometry.transformationBuffer,
+        0,
+        geometry.transformMatrix.buffer,
+        geometry.transformMatrix.byteOffset,
+        geometry.transformMatrix.byteLength
+      );
+
+      // Write rotation buffer
+      device.queue.writeBuffer(
+        geometry.transformationBuffer,
+        64,
+        geometry.rotateMatrix.buffer,
+        geometry.rotateMatrix.byteOffset,
+        geometry.rotateMatrix.byteLength
+      );
+
+      passEncoder.setVertexBuffer(0, geometry.verticesBuffer);
+      passEncoder.setBindGroup(0, geometry.transformationBindGroup);
+      passEncoder.draw(geometry.vertices.length, 1, 0, 0);
+    });
   }
 
 
+  /**
+   * Update the transformations matrices of the geometries.
+   */
   private updateTransformationMatrix() {
-    // MOVE / TRANSLATE OBJECT
     const transform = mat4.create();
     const rotate = mat4.create();
 
@@ -57,11 +97,16 @@ export class Mesh {
     mat4.rotateY(rotate, rotate, this.rotation.y);
     mat4.rotateZ(rotate, rotate, this.rotation.z);
 
-    // APPLY
-    mat4.copy(this.geometry.transformMatrix, transform);
-    mat4.copy(this.geometry.rotateMatrix, rotate);
+    this.geometries.forEach(geometry => {
+      mat4.copy(geometry.transformMatrix, transform);
+      mat4.copy(geometry.rotateMatrix, rotate);
+    });
   }
 
+  /**
+   * Set a new position, scale or rotation to the mesh.
+   * @param parameters - Parameters to set.
+   */
   public setParameters(parameters?: GeometryParameters): void {
     this.position.x = parameters?.position?.x || this.position.x;
     this.position.y = parameters?.position?.y || this.position.y;

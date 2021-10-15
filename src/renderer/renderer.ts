@@ -46,7 +46,7 @@ export class Renderer {
       colorAttachments: [
         {
           view: undefined,
-          loadValue: { r: 0.25, g: 0.25, b: 0.25, a: 1.0 },
+          loadValue: { r: 0.25, g: 0.55, b: 0.25, a: 1.0 },
         },
       ],
       depthStencilAttachment: {
